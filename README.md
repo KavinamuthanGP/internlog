@@ -14,6 +14,10 @@ It provides a simple way to manage internship application stages, maintain a ski
 - Total learning hours
 - Skill goal progress
 - Learning suggestions based on current skill data
+- 
+ ## 🌐 Live Demo
+
+https://internlog-coral.vercel.app
 
 ### 💼 Internship Tracker
 - Add internship applications
