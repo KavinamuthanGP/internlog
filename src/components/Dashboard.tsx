@@ -1,16 +1,17 @@
 import React from 'react';
 import { Briefcase, BookOpen, Target, Calendar, TrendingUp, Award } from 'lucide-react';
+import type { Internship, Skill } from '../types';
 
 interface DashboardProps {
-  internships: any[];
-  skills: any[];
+  internships: Internship[];
+  skills: Skill[];
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ internships, skills }) => {
   const statusCounts = internships.reduce((acc, internship) => {
     acc[internship.status] = (acc[internship.status] || 0) + 1;
     return acc;
-  }, {});
+  }, {} as Record<string, number>);
 
   const recentSkills = skills.slice(-5).reverse();
   const totalSkills = skills.length;
@@ -127,7 +128,7 @@ const Dashboard: React.FC<DashboardProps> = ({ internships, skills }) => {
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white animate-slide-up hover:shadow-2xl transition-all duration-300" style={{ animationDelay: '700ms' }}>
         <h3 className="text-xl font-semibold mb-3 flex items-center">
           <Target className="w-5 h-5 mr-2" />
-          AI Learning Recommendations
+          Learning Recommendations
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white/10 backdrop-blur rounded-lg p-4 hover:bg-white/20 transition-all duration-300 hover:scale-105 cursor-pointer">
@@ -139,8 +140,8 @@ const Dashboard: React.FC<DashboardProps> = ({ internships, skills }) => {
             <p className="text-sm opacity-90">Add more backend skills to become full-stack</p>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-lg p-4 hover:bg-white/20 transition-all duration-300 hover:scale-105 cursor-pointer">
-            <h4 className="font-medium mb-2">Goal Progress</h4>
-            <p className="text-sm opacity-90">75% towards Web Developer proficiency</p>
+            <h4 className="font-medium mb-2">Skills Logged</h4>
+            <p className="text-sm opacity-90">{skills.length} skills logged so far — keep building on them</p>
           </div>
         </div>
       </div>

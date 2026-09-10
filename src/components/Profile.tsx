@@ -1,30 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Target, BookOpen, Briefcase, Download, Github, Linkedin, Mail } from 'lucide-react';
+import type { Internship, Skill, UserProfile } from '../types';
 
 interface ProfileProps {
-  internships: any[];
-  skills: any[];
+  internships: Internship[];
+  skills: Skill[];
+}
+
+const DEFAULT_PROFILE: UserProfile = {
+  name: 'Alex Johnson',
+  email: 'alex.johnson@email.com',
+  phone: '+1 (555) 123-4567',
+  linkedin: 'linkedin.com/in/alexjohnson',
+  github: 'github.com/alexjohnson',
+  careerGoal: 'Full Stack Developer',
+  bio: 'Passionate computer science student with a focus on web development and software engineering. Actively seeking internship opportunities to apply my skills in real-world projects.',
+  university: 'University of Technology',
+  major: 'Computer Science',
+  graduationYear: '2025'
+};
+
+const PROFILE_STORAGE_KEY = 'internlog-profile';
+
+function loadStoredProfile(): UserProfile {
+  try {
+    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (raw === null) return DEFAULT_PROFILE;
+    const parsed = JSON.parse(raw);
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return DEFAULT_PROFILE;
+    }
+    return { ...DEFAULT_PROFILE, ...parsed };
+  } catch {
+    return DEFAULT_PROFILE;
+  }
 }
 
 const Profile: React.FC<ProfileProps> = ({ internships, skills }) => {
-  const [profile, setProfile] = useState({
-    name: 'Alex Johnson',
-    email: 'alex.johnson@email.com',
-    phone: '+1 (555) 123-4567',
-    linkedin: 'linkedin.com/in/alexjohnson',
-    github: 'github.com/alexjohnson',
-    careerGoal: 'Full Stack Developer',
-    bio: 'Passionate computer science student with a focus on web development and software engineering. Actively seeking internship opportunities to apply my skills in real-world projects.',
-    university: 'University of Technology',
-    major: 'Computer Science',
-    graduationYear: '2025'
-  });
-
+  const [profile, setProfile] = useState<UserProfile>(loadStoredProfile);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Persist profile to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+  }, [profile]);
 
   const handleSave = () => {
     setIsEditing(false);
-    // In a real app, save to backend
+  };
+
+  const handleExportData = () => {
+    const exportPayload = {
+      app: 'Internlog',
+      exportedAt: new Date().toISOString(),
+      profile,
+      internships,
+      skills
+    };
+
+    const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
+      type: 'application/json'
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `internlog-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const generateResumeSummary = () => {
@@ -34,7 +78,7 @@ const Profile: React.FC<ProfileProps> = ({ internships, skills }) => {
       }
       acc[skill.category].push(skill.name);
       return acc;
-    }, {});
+    }, {} as Record<string, string[]>);
 
     const totalApplications = internships.length;
     const interviews = internships.filter(app => app.status === 'Interview').length;
@@ -162,18 +206,22 @@ const Profile: React.FC<ProfileProps> = ({ internships, skills }) => {
                 <Mail className="w-4 h-4" />
                 <span>{profile.email}</span>
               </div>
-              <div className="flex items-center space-x-2 text-gray-600">
-                <Linkedin className="w-4 h-4" />
-                <a href={`https://${profile.linkedin}`} className="hover:text-blue-600 transition-colors">
-                  LinkedIn
-                </a>
-              </div>
-              <div className="flex items-center space-x-2 text-gray-600">
-                <Github className="w-4 h-4" />
-                <a href={`https://${profile.github}`} className="hover:text-blue-600 transition-colors">
-                  GitHub
-                </a>
-              </div>
+              {profile.linkedin && (
+                <div className="flex items-center space-x-2 text-gray-600">
+                  <Linkedin className="w-4 h-4" />
+                  <a href={`https://${profile.linkedin.replace(/^https?:\/\//, '')}`} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                    LinkedIn
+                  </a>
+                </div>
+              )}
+              {profile.github && (
+                <div className="flex items-center space-x-2 text-gray-600">
+                  <Github className="w-4 h-4" />
+                  <a href={`https://${profile.github.replace(/^https?:\/\//, '')}`} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                    GitHub
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -186,7 +234,10 @@ const Profile: React.FC<ProfileProps> = ({ internships, skills }) => {
             <Download className="w-5 h-5 mr-2 text-blue-600" />
             Resume Summary
           </h3>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+          <button
+            onClick={handleExportData}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+          >
             Export Data
           </button>
         </div>
@@ -247,25 +298,25 @@ const Profile: React.FC<ProfileProps> = ({ internships, skills }) => {
           <div className="bg-white/10 backdrop-blur rounded-lg p-4">
             <h4 className="font-medium mb-2">Application Success Rate</h4>
             <p className="text-2xl font-bold">
-              {resumeData.totalApplications > 0 
+              {resumeData.totalApplications > 0
                 ? Math.round((resumeData.interviews / resumeData.totalApplications) * 100)
                 : 0}%
             </p>
             <p className="text-sm opacity-80">Interview conversion rate</p>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-lg p-4">
-            <h4 className="font-medium mb-2">Learning Streak</h4>
+            <h4 className="font-medium mb-2">Total Learning Time</h4>
             <p className="text-2xl font-bold">
-              {skills.length > 0 ? Math.max(1, Math.floor(skills.length / 7)) : 0}
+              {skills.reduce((total, skill) => total + (Number(skill.timeSpent) || 0), 0)}
             </p>
-            <p className="text-sm opacity-80">Weeks of consistent learning</p>
+            <p className="text-sm opacity-80">Hours logged across {skills.length} skills</p>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-lg p-4">
             <h4 className="font-medium mb-2">Goal Progress</h4>
             <p className="text-2xl font-bold">
               {Math.min(100, Math.round((resumeData.skillCount / 20) * 100))}%
             </p>
-            <p className="text-sm opacity-80">Towards {profile.careerGoal}</p>
+            <p className="text-sm opacity-80">{resumeData.skillCount} of 20 skills towards {profile.careerGoal}</p>
           </div>
         </div>
       </div>

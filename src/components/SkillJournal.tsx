@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, BookOpen, Calendar, TrendingUp, Target, Zap } from 'lucide-react';
-
-interface Skill {
-  id: string;
-  name: string;
-  category: string;
-  date: string;
-  proficiency: number;
-  notes: string;
-  timeSpent: number; // in hours
-}
+import type { Skill, SkillCategory } from '../types';
 
 interface SkillJournalProps {
   skills: Skill[];
@@ -20,9 +11,10 @@ interface SkillJournalProps {
 const SkillJournal: React.FC<SkillJournalProps> = ({ skills, onAddSkill, onDeleteSkill }) => {
   const [showForm, setShowForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [deletingSkill, setDeletingSkill] = useState<Skill | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Frontend',
+    category: 'Frontend' as SkillCategory,
     date: new Date().toISOString().split('T')[0],
     proficiency: 3,
     notes: '',
@@ -122,7 +114,7 @@ const SkillJournal: React.FC<SkillJournalProps> = ({ skills, onAddSkill, onDelet
         <div className="bg-gradient-to-r from-green-600 to-teal-600 rounded-xl p-6 text-white">
           <h3 className="text-xl font-semibold mb-4 flex items-center">
             <Zap className="w-5 h-5 mr-2" />
-            AI Learning Recommendations
+            Learning Suggestions
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {recommendations.map((rec, index) => (
@@ -163,7 +155,7 @@ const SkillJournal: React.FC<SkillJournalProps> = ({ skills, onAddSkill, onDelet
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
               <select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value as SkillCategory })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               >
                 {categories.slice(1).map(cat => (
@@ -264,7 +256,7 @@ const SkillJournal: React.FC<SkillJournalProps> = ({ skills, onAddSkill, onDelet
 
       {/* Skills Timeline */}
       <div className="space-y-4">
-        {sortedSkills.map((skill, index) => (
+        {sortedSkills.map((skill) => (
           <div key={skill.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center space-x-3">
@@ -287,8 +279,9 @@ const SkillJournal: React.FC<SkillJournalProps> = ({ skills, onAddSkill, onDelet
                 </div>
               </div>
               <button
-                onClick={() => onDeleteSkill(skill.id)}
-                className="text-gray-400 hover:text-red-600 transition-colors duration-200"
+                onClick={() => setDeletingSkill(skill)}
+                className="text-gray-400 hover:text-red-600 transition-colors duration-200 text-xl leading-none"
+                aria-label={`Delete ${skill.name} entry`}
               >
                 ×
               </button>
@@ -333,6 +326,39 @@ const SkillJournal: React.FC<SkillJournalProps> = ({ skills, onAddSkill, onDelet
             <Plus className="w-4 h-4" />
             <span>Log Your First Skill</span>
           </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deletingSkill && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setDeletingSkill(null)}
+          />
+          <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 p-6 max-w-sm w-full">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Skill Entry</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Delete the {deletingSkill.name} entry? This cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setDeletingSkill(null)}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  onDeleteSkill(deletingSkill.id);
+                  setDeletingSkill(null);
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

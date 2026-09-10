@@ -1,30 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import SplashScreen from './components/SplashScreen';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import InternshipTracker from './components/InternshipTracker';
 import SkillJournal from './components/SkillJournal';
 import Profile from './components/Profile';
+import type { Internship, Skill } from './types';
 
-interface Internship {
-  id: string;
-  company: string;
-  role: string;
-  location: string;
-  applicationDate: string;
-  status: 'Applied' | 'Shortlisted' | 'Interview' | 'Offer' | 'Rejected';
-  notes: string;
-  companyWebsite?: string;
+const STORAGE_KEYS = {
+  internships: 'internlog-internships',
+  skills: 'internlog-skills',
+  profile: 'internlog-profile',
+} as const;
+
+const LEGACY_KEYS = {
+  internships: 'careertrack-internships',
+  skills: 'careertrack-skills',
+} as const;
+
+/**
+ * Read and parse a localStorage key, returning a fallback value when the
+ * entry is missing, malformed JSON, or not an array (e.g. corrupted storage).
+ */
+function loadStoredList<T>(key: string, fallback: T[]): T[] {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return fallback;
+    return parsed as T[];
+  } catch {
+    return fallback;
+  }
 }
 
-interface Skill {
-  id: string;
-  name: string;
-  category: string;
-  date: string;
-  proficiency: number;
-  notes: string;
-  timeSpent: number;
+/** One-time migration from the legacy "careertrack-*" storage keys. */
+function migrateLegacyKey(legacyKey: string, newKey: string): void {
+  if (localStorage.getItem(newKey) !== null) return;
+  const raw = localStorage.getItem(legacyKey);
+  if (raw === null) return;
+  localStorage.setItem(newKey, raw);
+  localStorage.removeItem(legacyKey);
 }
 
 function App() {
@@ -35,12 +51,10 @@ function App() {
 
   // Load data from localStorage on mount
   useEffect(() => {
-    const savedInternships = localStorage.getItem('careertrack-internships');
-    const savedSkills = localStorage.getItem('careertrack-skills');
-    
-    if (savedInternships) {
-      setInternships(JSON.parse(savedInternships));
-    } else {
+    migrateLegacyKey(LEGACY_KEYS.internships, STORAGE_KEYS.internships);
+    migrateLegacyKey(LEGACY_KEYS.skills, STORAGE_KEYS.skills);
+
+    if (localStorage.getItem(STORAGE_KEYS.internships) === null) {
       // Sample data for demonstration
       setInternships([
         {
@@ -64,11 +78,11 @@ function App() {
           companyWebsite: 'https://startupxyz.com'
         }
       ]);
-    }
-    
-    if (savedSkills) {
-      setSkills(JSON.parse(savedSkills));
     } else {
+      setInternships(loadStoredList<Internship>(STORAGE_KEYS.internships, []));
+    }
+
+    if (localStorage.getItem(STORAGE_KEYS.skills) === null) {
       // Sample skills data
       setSkills([
         {
@@ -99,16 +113,18 @@ function App() {
           timeSpent: 5
         }
       ]);
+    } else {
+      setSkills(loadStoredList<Skill>(STORAGE_KEYS.skills, []));
     }
   }, []);
 
   // Save data to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('careertrack-internships', JSON.stringify(internships));
+    localStorage.setItem(STORAGE_KEYS.internships, JSON.stringify(internships));
   }, [internships]);
 
   useEffect(() => {
-    localStorage.setItem('careertrack-skills', JSON.stringify(skills));
+    localStorage.setItem(STORAGE_KEYS.skills, JSON.stringify(skills));
   }, [skills]);
 
   const addInternship = (internshipData: Omit<Internship, 'id'>) => {
@@ -120,7 +136,7 @@ function App() {
   };
 
   const updateInternship = (id: string, updates: Partial<Internship>) => {
-    setInternships(internships.map(internship => 
+    setInternships(internships.map(internship =>
       internship.id === id ? { ...internship, ...updates } : internship
     ));
   };

@@ -73,7 +73,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           style={{ opacity: textOpacity }}
         >
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-            CareerTrack
+            Internlog
           </h1>
           <p className="text-lg text-white/80 mb-8">Your Professional Journey</p>
         </div>

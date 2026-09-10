@@ -28,7 +28,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewChange }) 
                 <BarChart3 className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">CareerTrack</h1>
+                <h1 className="text-xl font-bold text-gray-900">Internlog</h1>
                 <p className="text-xs text-gray-500">Your Professional Journey</p>
               </div>
             </button>

@@ -1,16 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Building2, Calendar, MapPin, ExternalLink, Edit, Trash2 } from 'lucide-react';
-
-interface Internship {
-  id: string;
-  company: string;
-  role: string;
-  location: string;
-  applicationDate: string;
-  status: 'Applied' | 'Shortlisted' | 'Interview' | 'Offer' | 'Rejected';
-  notes: string;
-  companyWebsite?: string;
-}
+import type { Internship } from '../types';
 
 interface InternshipTrackerProps {
   internships: Internship[];
@@ -27,6 +17,7 @@ const InternshipTracker: React.FC<InternshipTrackerProps> = ({
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingInternship, setDeletingInternship] = useState<Internship | null>(null);
   const [formData, setFormData] = useState({
     company: '',
     role: '',
@@ -230,8 +221,9 @@ const InternshipTracker: React.FC<InternshipTrackerProps> = ({
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => onDeleteInternship(internship.id)}
+                  onClick={() => setDeletingInternship(internship)}
                   className="text-gray-400 hover:text-red-600 transition-colors duration-200"
+                  aria-label={`Delete ${internship.company} application`}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -297,6 +289,39 @@ const InternshipTracker: React.FC<InternshipTrackerProps> = ({
             <Plus className="w-4 h-4" />
             <span>Add Your First Application</span>
           </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deletingInternship && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setDeletingInternship(null)}
+          />
+          <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 p-6 max-w-sm w-full">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Application</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Delete your {deletingInternship.role} application at {deletingInternship.company}? This cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setDeletingInternship(null)}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  onDeleteInternship(deletingInternship.id);
+                  setDeletingInternship(null);
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
